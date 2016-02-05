@@ -117,6 +117,10 @@ defmodule Phoenix.Endpoint do
       to encode cookies, session and friends. Defaults to `nil` as it must
       be set per application.
 
+      This option requires either a string or `{:system, "ENV_VAR"}`. When
+      given a tuple like `{:system, "SECRET_KEY_BASE"}`, the secret will be
+      referenced from `System.get_env("SECRET_KEY_BASE")` at runtime.
+
     * `:server` - when `true`, starts the web server when the endpoint
       supervision tree starts. Defaults to `false`. The `mix phoenix.server`
       task automatically sets this to `true`.
@@ -430,7 +434,7 @@ defmodule Phoenix.Endpoint do
       end
 
       def call(conn, _opts) do
-        conn = put_in conn.secret_key_base, config(:secret_key_base)
+        conn = put_in conn.secret_key_base, secret_key_base()
         conn
         |> Plug.Conn.put_private(:phoenix_endpoint, __MODULE__)
         |> put_script_name()
@@ -478,6 +482,25 @@ defmodule Phoenix.Endpoint do
       """
       def config_change(changed, removed) do
         Phoenix.Endpoint.Adapter.config_change(__MODULE__, changed, removed)
+      end
+
+      @doc """
+      Returns the configured secret_key_base
+
+      It uses the configuration under `:secret_key_base` directly, optionally
+      fetching from an environment variable if a `{:system, "ENV_VAR_NAME"}`
+      tuple was provided.
+      """
+      def secret_key_base do
+        Phoenix.Config.cache(__MODULE__,
+          :__phoenix_secret_key_base__, fn _ ->
+            val =
+              case config(:secret_key_base) do
+                {:system, env_var} -> System.get_env(env_var)
+                val -> val
+              end
+            {:cache, val}
+          end)
       end
 
       @doc """

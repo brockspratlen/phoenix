@@ -7,7 +7,8 @@ defmodule Phoenix.Endpoint.EndpointTest do
            server: false, http: [port: 80], https: [port: 443],
            force_ssl: [subdomains: true],
            cache_static_lookup: true, cache_static_manifest: "../../../../test/fixtures/manifest.json",
-           pubsub: [adapter: Phoenix.PubSub.PG2, name: :endpoint_pub]]
+           pubsub: [adapter: Phoenix.PubSub.PG2, name: :endpoint_pub],
+           secret_key_base: String.duplicate("abcdefgh", 8)]
   Application.put_env(:phoenix, __MODULE__.Endpoint, @config)
 
   defmodule Endpoint do
@@ -23,6 +24,15 @@ defmodule Phoenix.Endpoint.EndpointTest do
     Endpoint.start_link()
     on_exit fn -> Application.delete_env(:phoenix, :serve_endpoints) end
     :ok
+  end
+
+  test "uses secret_key_base from env var when configured as such" do
+    assert Endpoint.secret_key_base == String.duplicate("abcdefgh", 8)
+    key = String.duplicate("environm", 8)
+    System.put_env("SECRET_KEY_BASE", key)
+    config = put_in(@config, [:secret_key_base], {:system, "SECRET_KEY_BASE"})
+    assert Endpoint.config_change([{Endpoint, config}], []) == :ok
+    assert Endpoint.secret_key_base == key
   end
 
   test "has reloadable configuration" do

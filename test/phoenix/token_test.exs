@@ -3,7 +3,7 @@ defmodule Phoenix.TokenTest do
   alias Phoenix.Token
 
   defmodule TokenEndpoint do
-    def config(:secret_key_base), do: "abc123"
+    def secret_key_base, do: "abc123"
   end
 
   test "signes and verifies token with connection" do

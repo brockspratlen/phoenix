@@ -126,7 +126,7 @@ defmodule Phoenix.Token do
 
   # Gathers configuration and generates the key secrets and signing secrets.
   defp get_secret(endpoint, salt, opts) do
-    secret_key_base = endpoint.config(:secret_key_base)
+    secret_key_base = endpoint.secret_key_base()
     iterations = Keyword.get(opts, :key_iterations, 1000)
     length = Keyword.get(opts, :key_length, 32)
     digest = Keyword.get(opts, :key_digest, :sha256)
